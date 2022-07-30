@@ -303,7 +303,7 @@ int NGraphAnalysis(std::string Text)
         //calculate the average index of coincidence
         mid = sum / (float) i;
 
-        //test the closest IC to value 0.068
+        //test the closest IC to value 0.072723
         float sub = mid - 0.072723;
         
         if(sub < 0)
