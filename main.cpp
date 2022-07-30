@@ -263,9 +263,9 @@ float IndexCoincidence(std::string Text)
 
     for (int i = 0; i < 26; i++) 
     {
-        float num = count(Text.begin() , Text.end() , ALPHABET[i]) ; 
-        num = num + count(Text.begin() , Text.end() , ALPHABETUP[i]) ; 
-        sum += ( num * ( num - 1) ) ;
+        float num = count(Text.begin(), Text.end(), ALPHABET[i]); 
+        num = num + count(Text.begin(), Text.end(), ALPHABETUP[i]); 
+        sum += (num * ( num - 1)) ;
     }
 
     return sum/(Text.length()*(Text.length()-1));
