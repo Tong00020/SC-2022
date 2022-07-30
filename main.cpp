@@ -304,7 +304,7 @@ int NGraphAnalysis(std::string Text)
         mid = sum / (float) i;
 
         //test the closest IC to value 0.068
-        float sub = mid - 0.0738;
+        float sub = mid - 0.072723;
         
         if(sub < 0)
         {
