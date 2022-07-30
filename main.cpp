@@ -40,6 +40,9 @@ int LENGTHCHOICES = 0;//suggestions of key length
 int MAXKEYLENGTH = 0;//max size of key to be checked
 float *LANGUAGEFREQ = 0;//pointer to the vector of probabilities for english or portuguese characters
 
+char ALPHABET[26] = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'};
+char ALPHABETUP[26] = {'A','B','B','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'};
+
 float PTBRFREQ[ALPHABETSIZE] = {0.1463, 0.0104, 0.0388, 0.0499, 0.1257, 0.0102, 0.0130,
                     0.0128, 0.0618, 0.0040, 0.0002, 0.0278, 0.0474, 0.0505,
                     0.1073, 0.0252, 0.0120, 0.0653, 0.0780, 0.0434, 0.0463,
@@ -253,125 +256,69 @@ void DecryptionWithoutKey()
 
 using std::find;
 
+// Indice de coincidencia
 float IndexCoincidence(std::string Text) 
 {
-    std::vector<char> used;
+   float sum = 0.0;
 
-    int num = 0, den = 0;
-    for(int i=0; i < Text.length(); i++){
-        int flag = 0;
-
-        if (*find(used.begin(), used.end(), Text[i]) != Text[i]){
-            used.push_back(Text[i]);
-            flag = 1;
-        }
-
-        if(flag==1){
-            int val= count(Text.begin(), Text.end(), Text[i]);
-            num += val * (val - 1);
-            den += val;
-
-            if (den == 0)
-                return 0.0;
-            else
-                return num / ( den * (den - 1));
-        }
+    for (int i = 0; i < 26; i++) 
+    {
+        float num = count(Text.begin() , Text.end() , ALPHABET[i]) ; 
+        num = num + count(Text.begin() , Text.end() , ALPHABETUP[i]) ; 
+        sum += ( num * ( num - 1) ) ;
     }
 
+    return sum/(Text.length()*(Text.length()-1));
 }
 
 
-int NGraphAnalysis(std::string Text) // AQUI////
+int NGraphAnalysis(std::string Text) 
 {
-   
-
     int Choice = 0;
-
+    float dif = 100.0;
+    
+    // Assume key length n, starting with 2
     for(int i = 2; i <= MAXKEYLENGTH; i++) //lenght
     {
-        for(int j = 0; j < Text.length(); j=j+i-1)
-        {
+        int count = 0;
+        float sum = 0.0, mid = 0.0;
 
-        }
-    }
-    
-    
-    /* int Factors[MAXKEYLENGTH];//Register how many times a factor appeared
-    for(int i = 0; i < MAXKEYLENGTH; i++)
-    {
-        Factors[i] = 0;
-    }
-
-    for(int i = 0; i < Text.length()-NGRAPHLENGTH-1; i++)
-    {
-        for(int j = i+1; j < (Text.length()-NGRAPHLENGTH); j++)
+        //split ciphertext into n groups
+        while(count < i)
         {
-            if(Text[i] == Text[j] && Text[i+1] == Text[j+1] && Text[i+2] == Text[j+2])
+            std::string characters = "";
+
+            for(int j = 0; j < Text.length() - count; j=j+i)
             {
-                int Spacing = j-i; //measures distance between the trigraphs
-
-                for(int i = (Spacing < MAXKEYLENGTH ? Spacing : MAXKEYLENGTH); i > 1; i--)
-                {
-                    if(Spacing%i == 0)
-                    {
-                        Factors[i-1]++; //add to factor counting
-                    }
-                }
+                characters += Text[count+j];
             }
-        }
-    }
-
-    int Possibilities[LENGTHCHOICES][2];
-    for(int i = 0; i < LENGTHCHOICES; i++)//Initializes counters
-    {
-        for(int j = 0; j < 2; j++)
-        {
-            Possibilities[i][j] = 0;
-        }
-    }
-
-    for(int i = 0 ; i < MAXKEYLENGTH; i++)//Runs through
-    {
-        if((Factors[i]) > Possibilities[LENGTHCHOICES-1][1]) //If current size has higher count than the lower registered
-        {
-            Possibilities[LENGTHCHOICES-1][1] = Factors[i];//Pass factor count to last position
-            Possibilities[LENGTHCHOICES-1][0] = i+1;//Pass size to last position
-
-            for(int k = LENGTHCHOICES-1; k > 0; k--)// Sort factor count
+            
+            if(characters.length() >= 2)
             {
-                if(Possibilities[k][1] > Possibilities[k-1][1])
-                {
-                    int TempIndex = Possibilities[k-1][0], TempFactors = Possibilities[k-1][1];
-                    Possibilities[k-1][0] = Possibilities[k][0]; //move index and factor count to higher position
-                    Possibilities[k-1][1] = Possibilities[k][1];
-                    Possibilities[k][0] = TempIndex;//lower previous value on hierarchy
-                    Possibilities[k][1] = TempFactors;
-                }
+                sum += IndexCoincidence(characters); 
             }
+            count++;
+        }
+        
+        //calculate the average index of coincidence
+        mid = sum / (float) i;
+
+        //test the closest IC to value 0.068
+        float sub = mid - 0.0738;
+        
+        if(sub < 0)
+        {
+            sub = sub * -1;
+        }
+
+
+        if(sub < dif)
+        {
+            dif = sub;
+            std::cout << sub << "\n";
+            Choice = i;
         }
     }
-    bool ChooseLength = true;
-    
-    while (ChooseLength)
-    {
-        Line();
-        std::cout << "\nBest estimated key choices are:\n";
-        for(int i = 0; i < LENGTHCHOICES; i++)
-        {
-            std::cout << i+1 << "- "<< Possibilities[i][0]<< std::endl;//Estimation test
-        }
-        std::cout << "\nChoose the number by typing the index on the left side and press enter: ";
-        std::cin >> Choice;
-        if(Choice < 1 || Choice > LENGTHCHOICES)
-        {
-            std::cout << "\nError! Try again.\n";
-        }
-        else
-        {
-            Choice = Possibilities[Choice-1][0];
-            ChooseLength = false;
-        }
-    }*/
 
     return Choice;
 }
