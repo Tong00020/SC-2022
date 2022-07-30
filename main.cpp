@@ -305,13 +305,15 @@ int NGraphAnalysis(std::string Text)
 
         //test the closest IC to value 0.072723 (portugues)
         // IC to value 0.0667 (ingles)
-        float sub = mid - 0.072723;
+
+        float ic_def = 0.072723;
+
+        float sub = mid - ic_def;
         
         if(sub < 0)
         {
             sub = sub * -1;
         }
-
 
         if(sub < dif)
         {
