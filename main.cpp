@@ -278,7 +278,7 @@ int NGraphAnalysis(std::string Text)
     float dif = 100.0;
     
     // Assume key length n, starting with 2
-    for(int i = 2; i <= MAXKEYLENGTH; i++) //lenght
+    for(int i = 1; i <= MAXKEYLENGTH; i++) //lenght
     {
         int count = 0;
         float sum = 0.0, mid = 0.0;
@@ -303,7 +303,8 @@ int NGraphAnalysis(std::string Text)
         //calculate the average index of coincidence
         mid = sum / (float) i;
 
-        //test the closest IC to value 0.072723
+        //test the closest IC to value 0.072723 (portugues)
+        // IC to value 0.0667 (ingles)
         float sub = mid - 0.072723;
         
         if(sub < 0)
