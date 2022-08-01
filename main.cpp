@@ -7,17 +7,16 @@
 /////////////////////////////////////////////////////////////
 
 //Includes
-#include <bits/stdc++.h>
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
 #include <cmath>
 #include <float.h>
+#include <algorithm>
 
 //Defines
 #define ALPHABETSIZE 26
-#define NGRAPHLENGTH 3
 
 //Funções
 void Init();//sets initial values to their standard
@@ -34,11 +33,13 @@ std::string VigenereEncrypt(std::string, std::string);//encryption algorythm
 std::string VigenereDecrypt(std::string, std::string);//decryption algorythm
 int NGraphAnalysis(std::string);//Checks the trigraphs of the cypher text
 std::string KeyAnalysis(int, std::string);//Checks the character frequencies and find suitable passwords
+std::string SubstrComparison(std::string);//Returns the shortest repeatable substring containing the password
+float CoincidenceIndex(std::string);
 
 //Global variables
-int LENGTHCHOICES = 0;//suggestions of key length
 int MAXKEYLENGTH = 0;//max size of key to be checked
 float *LANGUAGEFREQ = 0;//pointer to the vector of probabilities for english or portuguese characters
+float COINCINDEX = 0;//value of coincidence index for certain language
 
 char ALPHABET[26] = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'};
 char ALPHABETUP[26] = {'A','B','B','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'};
@@ -58,10 +59,11 @@ int main(){
     return 0;//see ya
 }
 
-void Init(){
-    LENGTHCHOICES = 5;
+void Init()//sets initialization default values to english 
+{
     MAXKEYLENGTH = 20;
     LANGUAGEFREQ = ENUSFREQ;
+    COINCINDEX = 0.0667;
 }
 
 void RoutineManager(){
@@ -110,8 +112,7 @@ void Settings()
     {
         Line();
         std::cout << "\n\nWhich settings do you wanna change?\n\n"<<
-        "1- Maximum key length\n2- Number of key size suggestions" <<
-        "\n3- Text language (for decryption without password)\n"<<
+        "1- Maximum key length\n2- Text language (for decryption without password)\n"<<
         "Any other number- Return to menu\n\nType your choice and press enter: ";
 
         int Selection;
@@ -125,13 +126,6 @@ void Settings()
                 MAXKEYLENGTH = Selection;
                 break;
             case 2:
-                //Set Suggestions
-
-                std::cout << "Actual key size suggestions are "<< LENGTHCHOICES << ".\nType the key size suggestions number: ";
-                std::cin >> Selection;
-                LENGTHCHOICES = Selection;
-                break;
-            case 3:
                 //Select language
                 LangChoice = true;
                 while(LangChoice)
@@ -144,10 +138,12 @@ void Settings()
                     {
                         case 1:
                             LANGUAGEFREQ = ENUSFREQ;
+                            COINCINDEX = 0.0667;
                             LangChoice = false;
                             break;
                         case 2:
                             LANGUAGEFREQ = PTBRFREQ;
+                            COINCINDEX = 0.072723;
                             LangChoice = false;
                             break;
                         default:
@@ -231,6 +227,8 @@ void DecryptionWithoutKey()
     int ChosenLength = NGraphAnalysis(CleanText);
     std::string FoundKey = KeyAnalysis(ChosenLength, CleanText);
 
+    FoundKey = SubstrComparison(FoundKey);
+    std::cout << "\nKey length found is: " << FoundKey.length();
     std::cout << "\nPassword found is: "<< FoundKey;
 
     std::string Result = VigenereDecrypt(ReadFile(Filename), FoundKey);
@@ -257,11 +255,11 @@ void DecryptionWithoutKey()
 using std::find;
 
 // Indice de coincidencia
-float IndexCoincidence(std::string Text) 
+float CoincidenceIndex(std::string Text) 
 {
    float sum = 0.0;
 
-    for (int i = 0; i < 26; i++) 
+    for (int i = 0; i < ALPHABETSIZE; i++) 
     {
         float num = count(Text.begin(), Text.end(), ALPHABET[i]); 
         num = num + count(Text.begin(), Text.end(), ALPHABETUP[i]); 
@@ -269,6 +267,37 @@ float IndexCoincidence(std::string Text)
     }
 
     return sum/(Text.length()*(Text.length()-1));
+}
+
+std::string SubstrComparison(std::string Pass)
+{
+    for(int i = 1; i <= (Pass.length()>>1); i++)
+    {
+        if(Pass.length() % i == 0)
+        {
+            int Slices = Pass.length()/i;
+            std::string Aux[Slices];
+            //check if all parts match
+            for(int j = 0; j < Slices;j++)
+            {
+                Aux[j] = Pass.substr(j*i, i);
+            }
+            
+            bool AreEqual = true;
+            for(int j = 1; j<Slices && AreEqual; j++)
+            {
+                if(Aux[0] != Aux[j])
+                {
+                    AreEqual = false;
+                }
+            }
+            if(AreEqual)
+            {
+                return Aux[1];
+            }
+        }
+    }
+    return Pass;
 }
 
 
@@ -295,7 +324,7 @@ int NGraphAnalysis(std::string Text)
             
             if(characters.length() >= 2)
             {
-                sum += IndexCoincidence(characters); 
+                sum += CoincidenceIndex(characters); 
             }
             count++;
         }
@@ -303,13 +332,9 @@ int NGraphAnalysis(std::string Text)
         //calculate the average index of coincidence
         mid = sum / (float) i;
 
-        //test the closest IC to value 0.072723 (portugues)
-        // IC to value 0.0667 (ingles)
+        //test the closest Coincidence index to value 
 
-        float ic_def = 0.072723;
-
-        float sub = mid - ic_def;
-        
+        float sub = mid - COINCINDEX;
         if(sub < 0)
         {
             sub = sub * -1;
@@ -318,7 +343,6 @@ int NGraphAnalysis(std::string Text)
         if(sub < dif)
         {
             dif = sub;
-            std::cout << sub << "\n";
             Choice = i;
         }
     }
